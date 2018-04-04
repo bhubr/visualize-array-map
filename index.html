@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Visualize map</title>
+    <link rel="stylesheet" href="bootstrap.min.css">
+  </head>
+  <body>
+    <!-- page content -->
+    <div id="main" class="container">
+
+    </div>
+
+    <script src="jquery-3.3.1.min.js"></script>
+    <script>
+
+      Array.prototype.map = function(f) {
+        this._output = []
+        this._counter = 0
+        this._f = f
+        this._next = $('<button class="btn btn-primary">&raquo;</button>')
+        .appendTo( $('#main') )
+
+        console.log('setup map', this)
+        const clickHandler = (e => {
+          console.log('output before', this._output)
+          const item = this[this._counter]
+          const result = f(item)
+          this._output.push(result)
+          $('#main').append(`<div>${this._counter} => ${item} => ${result} [${this._output.join(', ')}]</div>`)
+          console.log('output after', this._output)
+          this._counter++
+          if(this._counter >= this.length) {
+            console.log('done')
+            this._next.removeClass('btn-primary')
+            .prop('disabled', true)
+            this._next.off('click')
+          }
+        }).bind(this)
+
+        this._next.on('click', clickHandler)
+      }
+
+      document.addEventListener("DOMContentLoaded", event => {
+        console.dir(document.body)
+        const a = ['a', 'b', 'c'].map(o => o + 'x')
+      });
+
+
+
+    </script>
+
+  </body>
+</html>
