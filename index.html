@@ -4,46 +4,152 @@
     <meta charset="utf-8">
     <title>Visualize map</title>
     <link rel="stylesheet" href="bootstrap.min.css">
+    <link rel="stylesheet" href="prettify.css">
+    <style>
+    .visualizer {
+      width: 96%;
+      height: 500px;
+      padding: 20px;
+      border: 1px solid #ddd;
+    }
+    .pretty-item {
+      position: relative;
+      display: inline-block;
+      padding: 10px;
+      margin: 6px;
+      background: #f4f4f4;
+      transition: background 0.2s;
+      /*border-right: 1px solid #ddd;*/
+    }
+    .pretty-item.highlighted {
+      background: #def;
+    }
+    /*.pretty-item::after {
+      content: ',';
+      font-size: 2em;
+    }*/
+    .pretty-item:last-child {
+      border-right: none;
+    }
+    .pretty-item-idx {
+      position: absolute;
+      top: -22px;
+      left: 50%;
+      color: #888;
+    }
+    .pretty-spacer {
+      /*display: inline-block;*/
+      width: 6px;
+      border-top: 4px solid black;
+      border-bottom: 4px solid black;
+    }
+    .pretty-array {
+      display: inline-block;
+      border-left: 4px solid black;
+      border-right: 4px solid black;
+    }
+    .pretty-inner {
+      display: flex;
+    }
+    </style>
   </head>
   <body>
     <!-- page content -->
-    <div id="main" class="container">
+    <div id="main" class="container-fluid">
 
     </div>
 
     <script src="jquery-3.3.1.min.js"></script>
+    <script src="lodash.core.min.js"></script>
+    <script src="prettify.js"></script>
     <script>
 
-      Array.prototype.map = function(f) {
-        this._output = []
-        this._counter = 0
-        this._f = f
-        this._next = $('<button class="btn btn-primary">&raquo;</button>')
-        .appendTo( $('#main') )
+      const printArray = arr => '<div class="pretty-array"><div class="pretty-inner"><div class="pretty-spacer"></div>' + arr.reduce(
+        (carry, item) => carry + `<div class="pretty-item">${ prettify(item) }</div>`, ''
+      ) + '<div class="pretty-spacer"></div></div>'
 
-        console.log('setup map', this)
-        const clickHandler = (e => {
+      class MapVisualizer {
+        constructor(targetId, array, f) {
+          this._output = []
+          this._array = array
+          this._counter = 0
+          this._f = f
+          this._id = this.getId()
+          this._target = $(`#${targetId}`)
+          this._wrap = $(`<div class="visualizer" id="${this._id}"></div>`).appendTo(this._target)
+          this._next = $(`<button class="btn btn-primary" style="float:right">&raquo;</button>`)
+          .appendTo( this._wrap )
+          // for(let item of this._array) console.log(prettify(item))
+          this._wrap.append(printArray(this._array))
+          this._wrap.find('.pretty-arrow').click((e) => $(e.target).parent().toggleClass('expanded'))
+          this._inputItems = this._wrap.find('.pretty-item')
+          this._inputItems.each((idx, item) => {
+            $(item).append(`<div class="pretty-item-idx">${idx}</div>`)
+          })
+          this.clickHandler = this.clickHandler.bind(this)
+          this._next.on('click', this.clickHandler)
+        }
+        getId() {
+          return 'viz-' + (Math.floor(10000000 * Math.random())).toString(36)
+        }
+        clickHandler(e) {
+          console.log('click', this)
           console.log('output before', this._output)
-          const item = this[this._counter]
-          const result = f(item)
+          if(this._counter > 0) {
+            $(this._inputItems[this._counter - 1]).removeClass('highlighted')
+          }
+          $(this._inputItems[this._counter]).addClass('highlighted')
+          const item = this._array[this._counter]
+          const result = this._f(item)
           this._output.push(result)
-          $('#main').append(`<div>${this._counter} => ${item} => ${result} [${this._output.join(', ')}]</div>`)
+          this._wrap.append(`<div>${this._counter} => ${item} => ${result} [${this._output.join(', ')}]</div>`)
           console.log('output after', this._output)
           this._counter++
-          if(this._counter >= this.length) {
+          if(this._counter >= this._array.length) {
             console.log('done')
             this._next.removeClass('btn-primary')
             .prop('disabled', true)
             this._next.off('click')
           }
-        }).bind(this)
+        }
+      }
 
-        this._next.on('click', clickHandler)
+
+      Array.prototype.map = function(f) {
+        this._visualizer = new MapVisualizer('main', this, f)
+        // this._output = []
+        // this._counter = 0
+        // this._f = f
+        // this._next = $('<button class="btn btn-primary">&raquo;</button>')
+        // .appendTo( $('#main') )
+
+        // console.log('setup map', this)
+        // const clickHandler = (e => {
+        //   console.log('output before', this._output)
+        //   const item = this[this._counter]
+        //   const result = f(item)
+        //   this._output.push(result)
+        //   $('#main').append(`<div>${this._counter} => ${item} => ${result} [${this._output.join(', ')}]</div>`)
+        //   console.log('output after', this._output)
+        //   this._counter++
+        //   if(this._counter >= this.length) {
+        //     console.log('done')
+        //     this._next.removeClass('btn-primary')
+        //     .prop('disabled', true)
+        //     this._next.off('click')
+        //   }
+        // }).bind(this)
+
+        // this._next.on('click', clickHandler)
       }
 
       document.addEventListener("DOMContentLoaded", event => {
         console.dir(document.body)
-        const a = ['a', 'b', 'c'].map(o => o + 'x')
+        const a = [{ name: 'John', age: 40}, { name: 'Jane', age: 23 }].map(o => {
+          o.pouet = 'pouet'
+          return o
+        })
+        // const b = ['a', 'b', 'c', 'd'].map(o => o + 'xy')
       });
 
 

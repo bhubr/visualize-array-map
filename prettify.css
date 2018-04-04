@@ -1,0 +1,30 @@
+.pretty-key {
+  color: #565656;
+}
+.pretty-value {
+  color: #1b00d1;
+}
+.pretty-string {
+  color: #c61816;
+}
+/*.pretty-arrow::before {
+  content: '\25BA';
+  padding-right: 2px;
+  margin-left: -18px;
+  display: inline-block;
+  transition: all 0.15s;
+}
+.expanded > .pretty-arrow::before {
+  transform: rotate(90deg);
+}
+.pretty-wrap:not(.expanded) > div {
+  display: none;
+}*/
+.pretty-wrap.expanded > .pretty-arrlen {
+  display: none
+}
+.pretty-wrap:not(.expanded) > .pretty-arrlen {
+  display: inline-block;
+  padding: 0 5px;
+  color: #777;
+}
