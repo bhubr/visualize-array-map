@@ -30,7 +30,6 @@ class MapVisualizer {
     const inputBoxHeight = inputArrayBox.height()
 
     const funcCode = this.getFuncCode()
-    console.log(funcCode[funcCode.length - 1])
     this._funcBox = $(
       `<div class="pretty-func"><pre><code>${funcCode}</code></pre></div>`
     ).appendTo(this._wrap)
@@ -60,26 +59,18 @@ class MapVisualizer {
       lines[idx] = l.substr(closingBracePos)
     })
     lines.unshift(firstLine)
-    console.log(lines)
-    console.log('before err', closingBracePos)
-    // const trimmedLines = lines.map(l => l.substr(closingBracePos))
-    // console.log(trimmedLines)
-    // console.log(closingBracePos)
     return lines.join('\n')
   }
   getId() {
     return 'viz-' + (Math.floor(10000000 * Math.random())).toString(36)
   }
   clickHandler(e) {
-    console.log('click', this)
-    console.log('output before', this._output)
     const previousItem = $(this._inputItems[this._counter - 1])
     const currentItem = $(this._inputItems[this._counter])
     if(this._counter > 0) {
       previousItem.removeClass('highlighted')
     }
     currentItem.addClass('highlighted')
-    console.log('offset', currentItem.offset())
     const { left } = currentItem.offset()
     const leftOffset = Math.floor(left)
     const item = this._array[this._counter]
@@ -89,14 +80,11 @@ class MapVisualizer {
       this._resultBox.removeClass('highlighted')
     }
 
-    console.log('closing-spacer', this._outputArrayBox.find('.closing-spacer'));
-
     const resultBoxHtml = `<div class="result-item out highlighted">${ prettify(result) }</div>`
 
     this._resultBox = $(resultBoxHtml)
     .insertBefore(this._outputArrayBox.find('.closing-spacer'))
     this._outputArrayBox.find('.result-placeholder').remove()
-    console.log('output arr box', this._outputArrayBox)
     setTimeout(() => {
       this._funcBox.addClass('output')
       this._resultBox.removeClass('out')
@@ -106,10 +94,8 @@ class MapVisualizer {
     }, 1000)
     this._output.push(result)
     // this._wrap.append(`<div>${this._counter} => ${item} => ${result} [${this._output.join(', ')}]</div>`)
-    console.log('output after', this._output)
     this._counter++
     if(this._counter >= this._array.length) {
-      console.log('done')
       this._next.removeClass('btn-primary')
       .prop('disabled', true)
       this._next.off('click')
