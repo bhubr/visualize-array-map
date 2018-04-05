@@ -8,7 +8,7 @@
     <style>
     .visualizer {
       width: 96%;
-      height: 500px;
+      height: 700px;
       padding: 20px;
       border: 1px solid #ddd;
     }
@@ -24,6 +24,23 @@
     .pretty-item.highlighted {
       background: #def;
     }
+    .pretty-item.highlighted::after {
+      content: '\2193 paramètre';
+      position: absolute;
+      bottom: -45px;
+      left: 0;
+      font-size: 1.5em;
+      animation: sheen 1.3s forwards;
+    }
+    @keyframes sheen {
+      75% {
+        transform: translate(0em, 24px);
+      }
+      100% {
+        color: white;
+        transform: translate(0em, 32px);
+      }
+    }
     /*.pretty-item::after {
       content: ',';
       font-size: 2em;
@@ -36,6 +53,10 @@
       top: -22px;
       left: 50%;
       color: #888;
+    }
+    .pretty-item.highlighted .pretty-item-idx {
+      color: #a6f;
+      font-weight: bold;
     }
     .pretty-spacer {
       /*display: inline-block;*/
@@ -50,6 +71,27 @@
     }
     .pretty-inner {
       display: flex;
+    }
+    .pretty-func {
+      position: relative;
+      display: flex;
+      margin: 60px 0;
+    }
+    .pretty-func.output::after {
+      content: '\2193 résultat';
+      position: absolute;
+      bottom: -15px;
+      left: 0;
+      font-size: 1.5em;
+      animation: sheen 1.3s forwards;
+    }
+    .pretty-func > pre {
+      display: inline-block;
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+    .pretty-func > div {
+      display: inline-block;
     }
     </style>
   </head>
@@ -76,12 +118,24 @@
           this._f = f
           this._id = this.getId()
           this._target = $(`#${targetId}`)
-          this._wrap = $(`<div class="visualizer" id="${this._id}"></div>`).appendTo(this._target)
-          this._next = $(`<button class="btn btn-primary" style="float:right">&raquo;</button>`)
+          this._wrap = $(
+            `<div class="visualizer" id="${this._id}"></div>`
+          ).appendTo(this._target)
+          this._next = $(
+            `<button class="btn btn-primary" style="float:right">&raquo;</button>`
+          )
           .appendTo( this._wrap )
-          // for(let item of this._array) console.log(prettify(item))
+
+
           this._wrap.append(printArray(this._array))
-          this._wrap.find('.pretty-arrow').click((e) => $(e.target).parent().toggleClass('expanded'))
+
+          const funcCode = this.getFuncCode()
+          console.log(funcCode[funcCode.length - 1])
+          this._funcBox = $(
+            `<div class="pretty-func"><pre><code>${funcCode}</code></pre></div>`
+          ).appendTo(this._wrap)
+
+          // this._wrap.find('.pretty-arrow').click((e) => $(e.target).parent().toggleClass('expanded'))
           this._inputItems = this._wrap.find('.pretty-item')
           this._inputItems.each((idx, item) => {
             $(item).append(`<div class="pretty-item-idx">${idx}</div>`)
@@ -89,18 +143,41 @@
           this.clickHandler = this.clickHandler.bind(this)
           this._next.on('click', this.clickHandler)
         }
+        getFuncCode() {
+          const lines = this._f.toString().split('\n')
+          const lastLine = lines[lines.length - 1]
+          const closingBracePos = lastLine.indexOf('}')
+          const firstLine = lines.shift()
+          lines.forEach((l, idx) => {
+            lines[idx] = l.substr(closingBracePos)
+          })
+          lines.unshift(firstLine)
+          console.log(lines)
+          console.log('before err', closingBracePos)
+          // const trimmedLines = lines.map(l => l.substr(closingBracePos))
+          // console.log(trimmedLines)
+          // console.log(closingBracePos)
+          return lines.join('\n')
+        }
         getId() {
           return 'viz-' + (Math.floor(10000000 * Math.random())).toString(36)
         }
         clickHandler(e) {
           console.log('click', this)
           console.log('output before', this._output)
+          const previousItem = $(this._inputItems[this._counter - 1])
+          const currentItem = $(this._inputItems[this._counter])
           if(this._counter > 0) {
-            $(this._inputItems[this._counter - 1]).removeClass('highlighted')
+            previousItem.removeClass('highlighted')
           }
-          $(this._inputItems[this._counter]).addClass('highlighted')
+          currentItem.addClass('highlighted')
           const item = this._array[this._counter]
           const result = this._f(item)
+          this._funcBox.find('.pretty-item').remove()
+          this._funcBox.append(`<div class="pretty-item">${ prettify(result) }</div>`)
+          console.log(this._funcBox)
+          setTimeout(() => this._funcBox.addClass('output'), 500)
+          setTimeout(() => this._funcBox.removeClass('output'), 1500)
           this._output.push(result)
           this._wrap.append(`<div>${this._counter} => ${item} => ${result} [${this._output.join(', ')}]</div>`)
           console.log('output after', this._output)
@@ -145,10 +222,14 @@
 
       document.addEventListener("DOMContentLoaded", event => {
         console.dir(document.body)
-        const a = [{ name: 'John', age: 40}, { name: 'Jane', age: 23 }].map(o => {
-          o.pouet = 'pouet'
-          return o
-        })
+        function addProp(obj) {
+          const rnd = (Math.floor(1000 * Math.random())).toString(36)
+          obj['prop' + rnd] = 'A property ' + rnd
+          return obj
+        }
+        const a = [{ name: 'John', age: 40}, { name: 'Jane', age: 23 }].map(
+          addProp
+        )
         // const b = ['a', 'b', 'c', 'd'].map(o => o + 'xy')
       });
 
