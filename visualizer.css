@@ -1,0 +1,116 @@
+.visualizer {
+  width: 96%;
+  height: 700px;
+  padding: 30px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+.pretty-item {
+  position: relative;
+  display: inline-block;
+  padding: 10px;
+  margin: 6px;
+  background: #f4f4f4;
+  transition: all 0.4s;
+  /*border-right: 1px solid #ddd;*/
+}
+.result-item {
+  position: relative;
+  display: inline-block;
+  padding: 10px;
+  margin: 6px;
+  background: #f4f4f4;
+  transition: all 0.8s;
+  overflow: hidden;
+  /*border-right: 1px solid #ddd;*/
+}
+.pretty-item.highlighted,
+.result-item.highlighted {
+  background: #def;
+}
+.result-item.out {
+  background: #fff;
+  color: #fff;
+  width: 0;
+}
+.result-item.out span {
+  color: #fff;
+}
+.pretty-item.highlighted::after {
+  content: '\2193 paramètre';
+  position: absolute;
+  bottom: -45px;
+  left: 0;
+  font-size: 1.5em;
+  animation: param 1.3s forwards;
+}
+@keyframes param {
+  75% {
+    transform: translate(0em, 16px);
+  }
+  100% {
+    color: white;
+    transform: translate(0em, 24px);
+  }
+}
+@keyframes result {
+  75% {
+    transform: translate(0em, 36px);
+  }
+  100% {
+    color: white;
+    transform: translate(0em, 48px);
+  }
+}
+/*.pretty-item::after {
+  content: ',';
+  font-size: 2em;
+}*/
+.pretty-item:last-child {
+  border-right: none;
+}
+.pretty-item-idx {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  color: #888;
+}
+.pretty-item.highlighted .pretty-item-idx {
+  color: #a6f;
+  font-weight: bold;
+}
+.pretty-spacer {
+  /*display: inline-block;*/
+  width: 6px;
+  border-top: 4px solid black;
+  border-bottom: 4px solid black;
+}
+.pretty-array {
+  display: inline-block;
+  border-left: 4px solid black;
+  border-right: 4px solid black;
+}
+.pretty-inner {
+  display: flex;
+}
+.pretty-func {
+  position: relative;
+  display: flex;
+  margin: 45px 0;
+}
+.pretty-func.output::after {
+  content: '\2193 résultat';
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  font-size: 1.5em;
+  animation: result 1.3s forwards;
+}
+.pretty-func > pre {
+  display: inline-block;
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+.pretty-func > div {
+  display: inline-block;
+}

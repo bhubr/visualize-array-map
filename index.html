@@ -5,287 +5,27 @@
     <title>Visualize map</title>
     <link rel="stylesheet" href="bootstrap.min.css">
     <link rel="stylesheet" href="prettify.css">
-    <style>
-    .visualizer {
-      width: 96%;
-      height: 700px;
-      padding: 20px;
-      border: 1px solid #ddd;
-    }
-    .pretty-item {
-      position: relative;
-      display: inline-block;
-      padding: 10px;
-      margin: 6px;
-      background: #f4f4f4;
-      transition: all 0.4s;
-      /*border-right: 1px solid #ddd;*/
-    }
-    .result-item {
-      position: relative;
-      display: inline-block;
-      padding: 10px;
-      margin: 6px;
-      background: #f4f4f4;
-      transition: all 0.8s;
-      overflow: hidden;
-      /*border-right: 1px solid #ddd;*/
-    }
-    .pretty-item.highlighted,
-    .result-item.highlighted {
-      background: #def;
-    }
-    .result-item.out {
-      background: #fff;
-      color: #fff;
-      width: 0;
-    }
-    .result-item.out span {
-      color: #fff;
-    }
-    .pretty-item.highlighted::after {
-      content: '\2193 paramètre';
-      position: absolute;
-      bottom: -45px;
-      left: 0;
-      font-size: 1.5em;
-      animation: param 1.3s forwards;
-    }
-    @keyframes param {
-      75% {
-        transform: translate(0em, 16px);
-      }
-      100% {
-        color: white;
-        transform: translate(0em, 24px);
-      }
-    }
-    @keyframes result {
-      75% {
-        transform: translate(0em, 36px);
-      }
-      100% {
-        color: white;
-        transform: translate(0em, 48px);
-      }
-    }
-    /*.pretty-item::after {
-      content: ',';
-      font-size: 2em;
-    }*/
-    .pretty-item:last-child {
-      border-right: none;
-    }
-    .pretty-item-idx {
-      position: absolute;
-      top: -22px;
-      left: 50%;
-      color: #888;
-    }
-    .pretty-item.highlighted .pretty-item-idx {
-      color: #a6f;
-      font-weight: bold;
-    }
-    .pretty-spacer {
-      /*display: inline-block;*/
-      width: 6px;
-      border-top: 4px solid black;
-      border-bottom: 4px solid black;
-    }
-    .pretty-array {
-      display: inline-block;
-      border-left: 4px solid black;
-      border-right: 4px solid black;
-    }
-    .pretty-inner {
-      display: flex;
-    }
-    .pretty-func {
-      position: relative;
-      display: flex;
-      margin: 45px 0;
-    }
-    .pretty-func.output::after {
-      content: '\2193 résultat';
-      position: absolute;
-      bottom: -20px;
-      left: 0;
-      font-size: 1.5em;
-      animation: result 1.3s forwards;
-    }
-    .pretty-func > pre {
-      display: inline-block;
-      padding: 10px;
-      border: 1px solid #ddd;
-    }
-    .pretty-func > div {
-      display: inline-block;
-    }
-    </style>
+    <link rel="stylesheet" href="visualizer.css">
   </head>
   <body>
     <!-- page content -->
-    <div id="main" class="container-fluid">
+    <div class="container-fluid">
+
+      <h1>Démo Array.map()</h1>
+      <div id="main"></div>
 
     </div>
 
     <script src="jquery-3.3.1.min.js"></script>
     <script src="lodash.core.min.js"></script>
     <script src="prettify.js"></script>
+    <script src="visualizer.js"></script>
     <script>
 
-      const printArray = arr => `<div class="pretty-array">
-        <div class="pretty-inner">
-          <div class="pretty-spacer"></div>` +
-          arr.reduce(
-            (carry, item) =>
-              carry + `<div class="pretty-item">${ prettify(item) }</div>`, ''
-          ) +
-          `<div class="pretty-spacer"></div>
-        </div>
-      </div>`
-
-      class MapVisualizer {
-        constructor(targetId, array, f) {
-          this._output = []
-          this._array = array
-          this._counter = 0
-          this._f = f
-          this._id = this.getId()
-          this._target = $(`#${targetId}`)
-          this._wrap = $(
-            `<div class="visualizer" id="${this._id}"></div>`
-          ).appendTo(this._target)
-          this._next = $(
-            `<button class="btn btn-primary" style="float:right">&raquo;</button>`
-          )
-          .appendTo( this._wrap )
-
-
-          const inputArrayBox = $(printArray(this._array)).appendTo(this._wrap)
-          const inputBoxHeight = inputArrayBox.height()
-
-
-
-          const funcCode = this.getFuncCode()
-          console.log(funcCode[funcCode.length - 1])
-          this._funcBox = $(
-            `<div class="pretty-func"><pre><code>${funcCode}</code></pre></div>`
-          ).appendTo(this._wrap)
-
-         this._outputArrayBox = $(`<div class="pretty-array">
-              <div class="pretty-inner">
-                <div class="pretty-spacer"></div>
-                <div class="result-placeholder" style="height: ${inputBoxHeight}px;width:10px"></div>
-                <div class="pretty-spacer closing-spacer"></div>
-              </div>
-            </div>`).appendTo(this._wrap)
-
-          // this._wrap.find('.pretty-arrow').click((e) => $(e.target).parent().toggleClass('expanded'))
-          this._inputItems = this._wrap.find('.pretty-item')
-          this._inputItems.each((idx, item) => {
-            $(item).append(`<div class="pretty-item-idx">${idx}</div>`)
-          })
-          this.clickHandler = this.clickHandler.bind(this)
-          this._next.on('click', this.clickHandler)
-        }
-        getFuncCode() {
-          const lines = this._f.toString().split('\n')
-          const lastLine = lines[lines.length - 1]
-          const closingBracePos = lastLine.indexOf('}')
-          const firstLine = lines.shift()
-          lines.forEach((l, idx) => {
-            lines[idx] = l.substr(closingBracePos)
-          })
-          lines.unshift(firstLine)
-          console.log(lines)
-          console.log('before err', closingBracePos)
-          // const trimmedLines = lines.map(l => l.substr(closingBracePos))
-          // console.log(trimmedLines)
-          // console.log(closingBracePos)
-          return lines.join('\n')
-        }
-        getId() {
-          return 'viz-' + (Math.floor(10000000 * Math.random())).toString(36)
-        }
-        clickHandler(e) {
-          console.log('click', this)
-          console.log('output before', this._output)
-          const previousItem = $(this._inputItems[this._counter - 1])
-          const currentItem = $(this._inputItems[this._counter])
-          if(this._counter > 0) {
-            previousItem.removeClass('highlighted')
-          }
-          currentItem.addClass('highlighted')
-          console.log('offset', currentItem.offset())
-          const { left } = currentItem.offset()
-          const leftOffset = Math.floor(left)
-          const item = this._array[this._counter]
-          const result = this._f(item)
-          // this._funcBox.find('.pretty-item').remove()
-          if(this._resultBox) {
-            this._resultBox.removeClass('highlighted')
-          }
-
-          console.log('closing-spacer', this._outputArrayBox.find('.closing-spacer'));
-
-          const resultBoxHtml = `<div class="result-item out highlighted">${ prettify(result) }</div>`
-
-          this._resultBox = $(resultBoxHtml)
-          .insertBefore(this._outputArrayBox.find('.closing-spacer'))
-          this._outputArrayBox.find('.result-placeholder').remove()
-          console.log('output arr box', this._outputArrayBox)
-          setTimeout(() => {
-            this._funcBox.addClass('output')
-            this._resultBox.removeClass('out')
-          }, 500)
-          setTimeout(() => {
-            this._funcBox.removeClass('output')
-          }, 1000)
-          this._output.push(result)
-          // this._wrap.append(`<div>${this._counter} => ${item} => ${result} [${this._output.join(', ')}]</div>`)
-          console.log('output after', this._output)
-          this._counter++
-          if(this._counter >= this._array.length) {
-            console.log('done')
-            this._next.removeClass('btn-primary')
-            .prop('disabled', true)
-            this._next.off('click')
-          }
-        }
-      }
-
-
-      Array.prototype.map = function(f) {
-        this._visualizer = new MapVisualizer('main', this, f)
-        // this._output = []
-        // this._counter = 0
-        // this._f = f
-        // this._next = $('<button class="btn btn-primary">&raquo;</button>')
-        // .appendTo( $('#main') )
-
-        // console.log('setup map', this)
-        // const clickHandler = (e => {
-        //   console.log('output before', this._output)
-        //   const item = this[this._counter]
-        //   const result = f(item)
-        //   this._output.push(result)
-        //   $('#main').append(`<div>${this._counter} => ${item} => ${result} [${this._output.join(', ')}]</div>`)
-        //   console.log('output after', this._output)
-        //   this._counter++
-        //   if(this._counter >= this.length) {
-        //     console.log('done')
-        //     this._next.removeClass('btn-primary')
-        //     .prop('disabled', true)
-        //     this._next.off('click')
-        //   }
-        // }).bind(this)
-
-        // this._next.on('click', clickHandler)
-      }
-
       document.addEventListener("DOMContentLoaded", event => {
-        console.dir(document.body)
+
+
+
         function getPersonAge(person) {
           return person.age
         }
@@ -293,13 +33,12 @@
           { name: 'Marie-Claire', age: 40},
           { name: 'Jacques', age: 23 },
           { name: 'Henri-Charles', age: 45 }
-          ].map(
+        ].map(
           getPersonAge
         )
-        // const b = ['a', 'b', 'c', 'd'].map(o => o + 'xy')
+
+
       });
-
-
 
     </script>
 
